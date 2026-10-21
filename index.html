@@ -22,21 +22,23 @@ h2.section-title{text-align:center;color:var(--accent-color);font-size:24px;marg
 .card p{color:var(--text-muted);font-size:14px;line-height:1.6;margin-bottom:0}
 .model-section{background:var(--card-bg);border:1px solid var(--accent-color);border-radius:8px;padding:30px;margin-bottom:50px}
 .model-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px}
-@media(max-width:768px){.model-grid,.sim-grid{grid-template-columns:1fr!important}}
+@media(max-width:768px){.model-grid,.sim-grid,.sim-layout{grid-template-columns:1fr!important}.sim-vars{position:static!important}}
 footer{text-align:center;padding:30px;border-top:1px solid var(--border-color);color:var(--text-muted);font-size:13px}
 
 /* Simulación */
-#simulacion{margin-bottom:50px}
+.sim-wrap{max-width:1300px;margin:0 auto;padding:40px 20px 0}
+.sim-layout{display:grid;grid-template-columns:1.8fr 1fr;gap:20px;align-items:start}
+.sim-vars{position:sticky;top:20px}
 .sim-intro{text-align:center;color:var(--text-muted);font-size:14px;max-width:680px;margin:-20px auto 24px;line-height:1.6}
 .sim-svg{width:100%;height:auto;display:block;background:#12191b;border:1px solid var(--border-color);border-radius:8px}
 .sim-svg text{font-family:inherit;fill:var(--text-color);text-anchor:middle}
 .node rect{fill:#1e1e1e;stroke:var(--accent-color);stroke-width:1.5;transition:fill .3s,stroke .3s}
 .node.pulse rect{fill:#0b3a42;stroke:#fff}
-.node .t{font-size:12px;font-weight:600}
-.node .v{font-size:11px;fill:var(--text-muted)}
+.node .t{font-size:13px;font-weight:600}
+.node .v{font-size:12px;fill:var(--text-muted)}
 .link{fill:none;stroke:#2b4c52;stroke-width:1.5;stroke-dasharray:4 4}
 .pk{fill:#00e5ff}
-.pkt{font-size:10px;fill:#00e5ff}
+.pkt{font-size:11px;fill:#00e5ff}
 #dEff{font-size:30px;font-weight:700;fill:var(--accent-color)}
 #dDelta{font-size:11px}
 .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
@@ -69,20 +71,12 @@ footer{text-align:center;padding:30px;border-top:1px solid var(--border-color);c
   <a href="#cotizador" class="btn-main btn-alt">⚙️ Ir al Cotizador Interactivo</a>
 </header>
 
-<div class="container">
-
-  <h2 class="section-title">¿Cómo Funciona Nuestra Solución?</h2>
-  <div class="grid-3">
-    <div class="card"><h3>1. Captura en Campo (Hardware Sourcing)</h3><p>Implementamos instrumentación crítica (temperaturas, presiones, flujos y analizador de O₂) integrando pasarelas IoT industriales robustas bajo demanda y sin stock inmovilizado.</p></div>
-    <div class="card"><h3>2. Procesamiento Cloud (ASME PTC 4.1)</h3><p>Nuestra plataforma en la nube procesa las variables en tiempo real, calculando con precisión matemática las pérdidas de calor y la eficiencia neta de la combustión.</p></div>
-    <div class="card"><h3>3. Dashboard y Control (SaaS B2B)</h3><p>La gerencia y los operadores visualizan tableros en vivo, tendencias de consumo energético y alertas tempranas desde cualquier dispositivo móvil o web.</p></div>
-  </div>
-
-  <!-- SIMULACIÓN DEL FLUJO DE DATOS -->
-  <section id="simulacion">
+<!-- SIMULACIÓN DEL FLUJO DE DATOS -->
+<section id="simulacion" class="sim-wrap">
     <h2 class="section-title">Del sensor al dashboard: así cambia la eficiencia</h2>
     <p class="sim-intro">Mueve una variable de la caldera. El dato viaja por el gateway y la nube, y al llegar al dashboard se recalculan las pérdidas del método indirecto: η = 100 − (L₁ + L₂₊₃ + L₄ + L₅ + L₆).</p>
-
+    <div class="sim-layout">
+      <div class="sim-left">
     <svg class="sim-svg" viewBox="0 0 900 420" role="img" aria-label="Flujo de datos desde los sensores de la caldera hasta el dashboard">
       <g id="links"></g>
       <g class="node" id="n_boiler"><rect x="15" y="150" width="110" height="130" rx="10"/><text class="t" x="70" y="205">Caldera</text><text class="v" x="70" y="223">pirotubular</text></g>
@@ -94,9 +88,14 @@ footer{text-align:center;padding:30px;border-top:1px solid var(--border-color);c
       <g class="node" id="n_dash"><rect x="740" y="115" width="145" height="150" rx="8"/><text class="t" x="812" y="145">Dashboard web</text><text id="dEff" x="812" y="195">–</text><text class="v" x="812" y="215">eficiencia η</text><text id="dDelta" x="812" y="240"></text></g>
       <g id="pk"></g>
     </svg>
-
-    <div class="sim-grid">
-      <div class="panel">
+      <div class="panel" style="margin-top:20px">
+        <h3>Pérdidas calculadas en la nube</h3>
+        <div id="losses"></div>
+        <div class="eff"><span>Eficiencia (método indirecto)</span><strong id="effTxt">–</strong></div>
+        <p class="note">Modelo simplificado y ilustrativo: combustible tipo carbón/biomasa (K = 0,68; CO₂ máx. 18,5 %; PCI 18 000 kJ/kg; 4 % de H₂). L₅ y L₆ se toman fijas (0,3 % y 1,5 %). Barras naranjas: la pérdida subió; verdes: bajó.</p>
+      </div>
+      </div>
+      <div class="panel sim-vars">
         <h3>Variables en campo</h3>
         <div class="ctl"><label>Temperatura gases de chimenea <b id="v_tg"></b></label><input type="range" id="tg" min="120" max="350" step="1" value="220"></div>
         <div class="ctl"><label>Oxígeno en gases (O₂) <b id="v_o2"></b></label><input type="range" id="o2" min="2" max="12" step="0.1" value="6"></div>
@@ -105,14 +104,18 @@ footer{text-align:center;padding:30px;border-top:1px solid var(--border-color);c
         <div class="ctl"><label>Humedad relativa del aire <b id="v_rh"></b></label><input type="range" id="rh" min="10" max="100" step="1" value="70"></div>
         <button class="auto" id="auto">▶ Simulación automática</button>
       </div>
-      <div class="panel">
-        <h3>Pérdidas calculadas en la nube</h3>
-        <div id="losses"></div>
-        <div class="eff"><span>Eficiencia (método indirecto)</span><strong id="effTxt">–</strong></div>
-        <p class="note">Modelo simplificado y ilustrativo: combustible tipo carbón/biomasa (K = 0,68; CO₂ máx. 18,5 %; PCI 18 000 kJ/kg; 4 % de H₂). L₅ y L₆ se toman fijas (0,3 % y 1,5 %). Barras naranjas: la pérdida subió; verdes: bajó.</p>
-      </div>
     </div>
-  </section>
+</section>
+
+<div class="container">
+
+  <h2 class="section-title">¿Cómo Funciona Nuestra Solución?</h2>
+  <div class="grid-3">
+    <div class="card"><h3>1. Captura en Campo (Hardware Sourcing)</h3><p>Implementamos instrumentación crítica (temperaturas, presiones, flujos y analizador de O₂) integrando pasarelas IoT industriales robustas bajo demanda y sin stock inmovilizado.</p></div>
+    <div class="card"><h3>2. Procesamiento Cloud (ASME PTC 4.1)</h3><p>Nuestra plataforma en la nube procesa las variables en tiempo real, calculando con precisión matemática las pérdidas de calor y la eficiencia neta de la combustión.</p></div>
+    <div class="card"><h3>3. Dashboard y Control (SaaS B2B)</h3><p>La gerencia y los operadores visualizan tableros en vivo, tendencias de consumo energético y alertas tempranas desde cualquier dispositivo móvil o web.</p></div>
+  </div>
+
 
   <div class="model-section">
     <h2 style="color:var(--accent-color);margin-top:0;font-size:20px;text-align:center;margin-bottom:25px">Modelo de Negocio Escalable (B2B)</h2>
