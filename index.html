@@ -26,7 +26,7 @@
     }
 
     .container {
-      max-width: 700px;
+      max-width: 750px;
       width: 100%;
       background-color: var(--card-bg);
       padding: 30px;
@@ -90,8 +90,8 @@
     }
 
     .checkbox-group {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr;
       gap: 10px;
       margin-top: 8px;
     }
@@ -100,7 +100,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
     }
 
@@ -108,6 +108,7 @@
       accent-color: var(--accent-color);
       width: 16px;
       height: 16px;
+      flex-shrink: 0;
     }
 
     .quote-box {
@@ -169,13 +170,13 @@
 <body>
 
 <div class="container">
-  <h1>S.M.A. IIoT - Cotizador de Monitoreo de Calderas</h1>
-  <p class="description">Configure las características de su planta para estimar la implementación del sistema de cálculo de eficiencia en tiempo real (Método Indirecto ASME PTC 4.1).</p>
+  <h1>S.M.A. IIoT - Cotizador Avanzado de Calderas</h1>
+  <p class="description">Configure las características de su planta para el sistema de cálculo de eficiencia en tiempo real (Método Indirecto ASME PTC 4.1 con instrumentación completa).</p>
 
   <form id="boilerForm">
     <!-- Paso 1: Datos Técnicos -->
     <fieldset class="fieldset-group">
-      <legend>1. Datos de la Caldera</legend>
+      <legend>1. Datos de la Caldera y Combustible</legend>
       
       <div class="form-group">
         <label for="boilerType">Tipo de Caldera:</label>
@@ -196,10 +197,10 @@
 
       <div class="form-group">
         <label for="fuelType">Combustible Principal:</label>
-        <select id="fuelType">
+        <select id="fuelType" onchange="calculateQuote()">
           <option value="gas">Gas Natural / GLP</option>
           <option value="diesel">ACPM / Diésel</option>
-          <option value="heavy">Fuel Oil / Heavy Fuel</option>
+          <option value="solid">Carbón / Biomasa (Sólido)</option>
         </select>
       </div>
     </fieldset>
@@ -207,23 +208,22 @@
     <!-- Paso 2: Instrumentación en Campo -->
     <fieldset class="fieldset-group">
       <legend>2. Instrumentación y Sensores Actuales</legend>
-      <p style="font-size: 12px; color: var(--text-muted); margin-top: 0;">Seleccione los componentes que <strong>YA están instalados</strong> en la caldera y funcionan correctamente:</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 0;">Seleccione los componentes que <strong>YA están instalados</strong> en campo:</p>
 
       <div class="checkbox-group">
-        <label class="checkbox-item">
-          <input type="checkbox" id="hasTempSensor" onchange="calculateQuote()">
-          Sensor de Temperatura de Gases de Chimenea (Pt100 / Termopar)
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="hasO2Sensor" onchange="calculateQuote()">
-          Analizador/Transmisor de Oxígeno ($O_2$) en Chimenea
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="hasPLC" onchange="calculateQuote()">
-          PLC o Controlador local con puerto Modbus / Ethernet habilitado
-        </label>
+        <label class="checkbox-item"><input type="checkbox" id="hasTempGases" onchange="calculateQuote()"> Sensor Temp. Gases de Chimenea</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasO2" onchange="calculateQuote()"> Analizador / Transmisor de Oxígeno (O₂)</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasTempAmb" onchange="calculateQuote()"> Sensor Temp. Ambiente</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasHumAmb" onchange="calculateQuote()"> Sensor Humedad Relativa Ambiente</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasTempFeedWater" onchange="calculateQuote()"> Sensor Temp. Agua de Alimentación</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasPressSteam" onchange="calculateQuote()"> Sensor Presión Salida de Vapor</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasFlowSteam" onchange="calculateQuote()"> Medidor de Flujo de Vapor</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasFlowWater" onchange="calculateQuote()"> Medidor de Flujo Agua de Alimentación</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasFlowFuel" onchange="calculateQuote()"> Medidor de Flujo de Combustible</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasTempFuel" onchange="calculateQuote()"> Sensor Temp. del Combustible</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasHumFuel" onchange="calculateQuote()"> Sensor Humedad del Combustible (Sólidos)</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasTempBoiler" onchange="calculateQuote()"> Sensor Temperatura de Cuerpo / Estructura</label>
+        <label class="checkbox-item"><input type="checkbox" id="hasPLC" onchange="calculateQuote()"> PLC / Gateway IoT con Modbus habilitado</label>
       </div>
     </fieldset>
 
@@ -231,22 +231,20 @@
     <div class="quote-box">
       <h3>Inversión Estimada de Implementación</h3>
       <div class="price-tag" id="totalPrice">$0 USD</div>
-      <div class="price-detail" id="priceBreakdown">Suscripción mensual Cloud: $120 USD/mes</div>
+      <div class="price-detail" id="priceBreakdown">Suscripción mensual Cloud: $150 USD/mes</div>
     </div>
 
-    <!-- Botón para ver opciones detalladas tipo Sourcing -->
+    <!-- Botón Sourcing -->
     <div style="margin-top: 20px; text-align: center;">
-      <button type="button" id="btnFetchOptions" onclick="fetchEquipmentOptions()" style="background-color: #2a2a2a; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%;">
-        📦 Ver Detalle de Sourcing (Equipos requeridos para envío)
+      <button type="button" onclick="fetchEquipmentOptions()" style="background-color: #2a2a2a; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%;">
+        📦 Ver Detalle de Sourcing (Hardware faltante para envío)
       </button>
     </div>
 
-    <!-- Contenedor de Opciones de Sourcing -->
+    <!-- Contenedor Sourcing -->
     <div id="equipmentResults" style="display: none; margin-top: 15px; background-color: #162427; border: 1px dashed var(--accent-color); border-radius: 6px; padding: 15px;">
       <h4 style="margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px;">Componentes bajo demanda (Modelo Sourcing / Abastecimiento):</h4>
-      <div id="equipmentListContainer">
-        <!-- Los elementos se llenarán dinámicamente con JS -->
-      </div>
+      <div id="equipmentListContainer"></div>
     </div>
 
     <!-- Contacto -->
@@ -268,112 +266,59 @@
 
 <script>
   const PRICING = {
-    cloudMonthly: 120,
+    cloudMonthly: 150,
     baseGateway: 450,
     sensors: {
-      temp: 180,
+      tempGases: 180,
       o2: 1200,
+      tempAmb: 90,
+      humAmb: 110,
+      tempFeedWater: 150,
+      pressSteam: 220,
+      flowSteam: 850,
+      flowWater: 750,
+      flowFuel: 680,
+      tempFuel: 140,
+      humFuel: 950, // Específico para carbón/biomasa
+      tempBoiler: 160,
       plcIntegration: 250
     }
   };
 
-  function fetchEquipmentOptions() {
-    const hasTemp = document.getElementById('hasTempSensor').checked;
-    const hasO2 = document.getElementById('hasO2Sensor').checked;
-    const hasPLC = document.getElementById('hasPLC').checked;
+  function getMissingItems() {
     const fuelType = document.getElementById('fuelType').value;
+    let missing = [];
 
-    const resultsContainer = document.getElementById('equipmentResults');
-    const listContainer = document.getElementById('equipmentListContainer');
+    if (!document.getElementById('hasTempGases').checked) 
+      missing.push({ name: 'Sensor Temp. Gases de Chimenea (Pt100/Termopar)', ref: 'Ref: WIKA / Omega', price: '$180 USD', key: 'tempGases' });
     
-    listContainer.innerHTML = '';
-    let missingItems = [];
-
-    if (!hasTemp) {
-      const sensorName = fuelType === 'gas' 
-        ? 'Transmisor Temperatura PT100 (Salida 4-20mA)' 
-        : 'Termopar Tipo K industrial alta temperatura';
-      missingItems.push({ name: sensorName, ref: 'Ref: WIKA / Omega', price: '$180 USD', type: 'Hardware Sourcing' });
-    }
-
-    if (!hasO2) {
-      missingItems.push({ name: 'Analizador / Sonda de Oxígeno (O₂) in situ', ref: 'Ref: Yokogawa / Envicare', price: '$1,200 USD', type: 'Hardware Sourcing' });
-    }
-
-    if (!hasPLC) {
-      missingItems.push({ name: 'Gateway IoT Industrial Modbus RTU', ref: 'Ref: Advantech / ESP32 Industrial', price: '$450 USD', type: 'Hardware Sourcing' });
-    }
-
-    if (missingItems.length === 0) {
-      listContainer.innerHTML = '<p style="font-size: 13px; color: var(--text-color); margin: 0;">¡La caldera cuenta con toda la instrumentación! Solo requiere aprovisionamiento de pasarela cloud.</p>';
-    } else {
-      missingItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'equipment-item';
-        div.innerHTML = `
-          <div>
-            <strong style="font-size: 13px; color: #fff;">${item.name}</strong><br>
-            <span style="font-size: 11px; color: var(--text-muted);">${item.ref}</span>
-          </div>
-          <div style="text-align: right;">
-            <span style="color: var(--accent-color); font-weight: bold; font-size: 13px;">${item.price}</span><br>
-            <span style="font-size: 10px; background: #333; padding: 2px 6px; border-radius: 3px; color: #aaa;">Disponible bajo pedido</span>
-          </div>
-        `;
-        listContainer.appendChild(div);
-      });
-    }
-
-    resultsContainer.style.display = 'block';
-  }
-
-  function calculateQuote() {
-    let initialSetupCost = PRICING.baseGateway;
-    let details = [];
-
-    const hasTemp = document.getElementById('hasTempSensor').checked;
-    const hasO2 = document.getElementById('hasO2Sensor').checked;
-    const hasPLC = document.getElementById('hasPLC').checked;
-    const capacity = document.getElementById('boilerCapacity').value;
-
-    let scaleMultiplier = 1;
-    if (capacity === 'medium') scaleMultiplier = 1.15;
-    if (capacity === 'large') scaleMultiplier = 1.3;
-
-    if (!hasTemp) {
-      initialSetupCost += PRICING.sensors.temp;
-      details.push("Sensor Temp");
-    }
-    if (!hasO2) {
-      initialSetupCost += PRICing.sensors.o2;
-      details.push("Sonda O₂");
-    }
-    if (!hasPLC) {
-      initialSetupCost += PRICING.sensors.plcIntegration;
-      details.push("Gateway IoT");
-    }
-
-    initialSetupCost = Math.round(initialSetupCost * scaleMultiplier);
-
-    document.getElementById('totalPrice').innerText = `$${initialSetupCost.toLocaleString()} USD`;
+    if (!document.getElementById('hasO2').checked) 
+      missing.push({ name: 'Analizador / Transmisor de Oxígeno (O₂)', ref: 'Ref: Yokogawa / Envicare', price: '$1,200 USD', key: 'o2' });
     
-    let breakdownText = `SaaS Cloud: $${PRICING.cloudMonthly} USD/mes.`;
-    if (details.length > 0) {
-      breakdownText += `<br>(Incluye abastecimiento de: ${details.join(', ')})`;
-    } else {
-      breakdownText += `<br>(Sin costos de hardware adicional)`;
-    }
+    if (!document.getElementById('hasTempAmb').checked) 
+      missing.push({ name: 'Sensor Temp. Ambiente', ref: 'Ref: Vaisala / Rotronic', price: '$90 USD', key: 'tempAmb' });
     
-    document.getElementById('priceBreakdown').innerHTML = breakdownText;
-  }
+    if (!document.getElementById('hasHumAmb').checked) 
+      missing.push({ name: 'Sensor Humedad Relativa Ambiente', ref: 'Ref: Vaisala', price: '$110 USD', key: 'humAmb' });
+    
+    if (!document.getElementById('hasTempFeedWater').checked) 
+      missing.push({ name: 'Sensor Temp. Agua de Alimentación', ref: 'Ref: Endress+Hauser', price: '$150 USD', key: 'tempFeedWater' });
+    
+    if (!document.getElementById('hasPressSteam').checked) 
+      missing.push({ name: 'Transductor de Presión Salida de Vapor', ref: 'Ref: Danfoss / WIKA', price: '$220 USD', key: 'pressSteam' });
+    
+    if (!document.getElementById('hasFlowSteam').checked) 
+      missing.push({ name: 'Medidor de Flujo de Vapor (Vórtex / Placa Orificio)', ref: 'Ref: Emerson / Yokogawa', price: '$850 USD', key: 'flowSteam' });
+    
+    if (!document.getElementById('hasFlowWater').checked) 
+      missing.push({ name: 'Medidor de Flujo Agua de Alimentación (Electromagnético)', ref: 'Ref: Krohne / Siemens', price: '$750 USD', key: 'flowWater' });
+    
+    if (!document.getElementById('hasFlowFuel').checked) 
+      missing.push({ name: 'Medidor de Flujo de Combustible', ref: 'Ref: Bronkhorst / Oval', price: '$680 USD', key: 'flowFuel' });
+    
+    if (!document.getElementById('hasTempFuel').checked) 
+      missing.push({ name: 'Sensor Temp. del Combustible', ref: 'Ref: Pt100 Industrial', price: '$140 USD', key: 'tempFuel' });
 
-  calculateQuote();
-
-  document.getElementById('boilerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert('¡Solicitud de suministro y propuesta técnica registrada con éxito! Nos pondremos en contacto para coordinar la logística de entrega.');
-  });
-</script>
-
-</body>
-</html>
+    // Solo pide humedad de combustible si es carbón / biomasa (sólido)
+    if (fuelType === 'solid' && !document.getElementById('hasHumFuel').checked) 
+      missing.push({ name: 'Analizador / Sensor Humedad de Combustible Sólido (Carbón/Biomasa)', ref: 'Ref: Berth
