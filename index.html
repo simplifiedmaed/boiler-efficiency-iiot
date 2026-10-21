@@ -1,1 +1,314 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S.M.A. Thermal - Cotizador IIoT Calderas</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --accent-color: #00bcd4;
+      --accent-hover: #008ba3;
+      --text-color: #e0e0e0;
+      --text-muted: #a0a0a0;
+      --border-color: #333333;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 700px;
+      width: 100%;
+      background-color: var(--card-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+    }
+
+    h1 {
+      color: var(--accent-color);
+      text-align: center;
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    p.description {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .fieldset-group {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    legend {
+      color: var(--accent-color);
+      font-weight: bold;
+      padding: 0 8px;
+      font-size: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    select, input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      background-color: #2a2a2a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .checkbox-item input {
+      accent-color: var(--accent-color);
+      width: 16px;
+      height: 16px;
+    }
+
+    .quote-box {
+      background-color: #162427;
+      border: 1px solid var(--accent-color);
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    .quote-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    .price-tag {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .price-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    button.btn-submit {
+      width: 100%;
+      background-color: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.2s;
+    }
+
+    button.btn-submit:hover {
+      background-color: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>S.M.A. IIoT - Cotizador de Monitoreo de Calderas</h1>
+  <p class="description">Configure las características de su planta para estimar la implementación del sistema de cálculo de eficiencia en tiempo real (Método Indirecto ASME PTC 4.1).</p>
+
+  <form id="boilerForm">
+    <!-- Paso 1: Datos Técnicos -->
+    <fieldset class="fieldset-group">
+      <legend>1. Datos de la Caldera</legend>
+      
+      <div class="form-group">
+        <label for="boilerType">Tipo de Caldera:</label>
+        <select id="boilerType" onchange="calculateQuote()">
+          <option value="pirotubular">Pirotubular (Tubos de Humo)</option>
+          <option value="acuatubular">Acuatubular (Tubos de Agua)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="boilerCapacity">Capacidad Térmica:</label>
+        <select id="boilerCapacity" onchange="calculateQuote()">
+          <option value="small">Hasta 100 BHP</option>
+          <option value="medium">101 BHP - 300 BHP</option>
+          <option value="large">Mayor a 300 BHP</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fuelType">Combustible Principal:</label>
+        <select id="fuelType">
+          <option value="gas">Gas Natural / GLP</option>
+          <option value="diesel">ACPM / Diésel</option>
+          <option value="heavy">Fuel Oil / Heavy Fuel</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <!-- Paso 2: Instrumentación en Campo -->
+    <fieldset class="fieldset-group">
+      <legend>2. Instrumentación y Sensores Actuales</legend>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 0;">Seleccione los componentes que <strong>YA están instalados</strong> en la caldera y funcionan correctamente:</p>
+
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <input type="checkbox" id="hasTempSensor" onchange="calculateQuote()">
+          Sensor de Temperatura de Gases de Chimenea (Pt100 / Termopar)
+        </label>
+
+        <label class="checkbox-item">
+          <input type="checkbox" id="hasO2Sensor" onchange="calculateQuote()">
+          Analizador/Transmisor de Oxígeno ($O_2$) en Chimenea
+        </label>
+
+        <label class="checkbox-item">
+          <input type="checkbox" id="hasPLC" onchange="calculateQuote()">
+          PLC o Controlador local con puerto Modbus / Ethernet habilitado
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Paso 3: Resumen y Cotización Estimada -->
+    <div class="quote-box">
+      <h3>Inversión Estimada de Implementación</h3>
+      <div class="price-tag" id="totalPrice">$0 USD</div>
+      <div class="price-detail" id="priceBreakdown">Suscripción mensual Cloud: $120 USD/mes</div>
+    </div>
+
+    <!-- Contacto -->
+    <fieldset class="fieldset-group" style="margin-top: 20px;">
+      <legend>3. Datos de Contacto</legend>
+      <div class="form-group">
+        <label for="clientName">Nombre / Empresa:</label>
+        <input type="text" id="clientName" required placeholder="Ej: Ingeniería Térmica S.A.S.">
+      </div>
+      <div class="form-group">
+        <label for="clientEmail">Correo Electrónico:</label>
+        <input type="email" id="clientEmail" required placeholder="ejemplo@empresa.com">
+      </div>
+    </fieldset>
+
+    <button type="submit" class="btn-submit">Solicitar Propuesta Formal</button>
+  </form>
+</div>
+
+<script>
+  // Precios base parametrizables (USD)
+  const PRICING = {
+    cloudMonthly: 120, // Cobro recurrente SaaS
+    baseGateway: 450,  // Kit básico de adquisición/Gateway IoT
+    sensors: {
+      temp: 180,       // Sensor Pt100 industrial + Transmisor 4-20mA
+      o2: 1200,        // Analizador Zirconia/O2 industrial
+      plcIntegration: 250 // Horas de ingeniería si no hay PLC para integrar
+    }
+  };
+
+  function calculateQuote() {
+    let initialSetupCost = PRICING.baseGateway;
+    let details = [];
+
+    const hasTemp = document.getElementById('hasTempSensor').checked;
+    const hasO2 = document.getElementById('hasO2Sensor').checked;
+    const hasPLC = document.getElementById('hasPLC').checked;
+    const capacity = document.getElementById('boilerCapacity').value;
+
+    // Ajuste por capacidad
+    let scaleMultiplier = 1;
+    if (capacity === 'medium') scaleMultiplier = 1.15;
+    if (capacity === 'large') scaleMultiplier = 1.3;
+
+    // Evaluar lo que HACE FALTA incluir
+    if (!hasTemp) {
+      initialSetupCost += PRICING.sensors.temp;
+      details.push("Incluye Sensor Temp Chimenea");
+    }
+
+    if (!hasO2) {
+      initialSetupCost += PRICING.sensors.o2;
+      details.push("Incluye Sonda O₂");
+    }
+
+    if (!hasPLC) {
+      initialSetupCost += PRICING.sensors.plcIntegration;
+      details.push("Incluye Módulo de Adquisición Autónomo");
+    }
+
+    // Aplicar escala por tamaño
+    initialSetupCost = Math.round(initialSetupCost * scaleMultiplier);
+
+    // Actualizar UI
+    document.getElementById('totalPrice').innerText = `$${initialSetupCost.toLocaleString()} USD`;
+    
+    let breakdownText = `Pago único (Hardware/Setup) + Suscripción Cloud: $${PRICING.cloudMonthly} USD/mes.`;
+    if (details.length > 0) {
+      breakdownText += `<br>(${details.join(', ')})`;
+    } else {
+      breakdownText += `<br>(Integración directa a infraestructura existente)`;
+    }
+    
+    document.getElementById('priceBreakdown').innerHTML = breakdownText;
+  }
+
+  // Precalcula al cargar la página
+  calculateQuote();
+
+  // Envío del formulario
+  document.getElementById('boilerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alert('¡Gracias por configurar su requerimiento! Los datos se han registrado y enviaremos la propuesta técnica detallada al correo ingresado.');
+  });
+</script>
+
+</body>
+</html>
