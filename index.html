@@ -224,7 +224,20 @@
       <div class="price-tag" id="totalPrice">$0 USD</div>
       <div class="price-detail" id="priceBreakdown">Suscripción mensual Cloud: $120 USD/mes</div>
     </div>
+<!-- Botón para ver opciones detalladas -->
+    <div style="margin-top: 20px; text-align: center;">
+      <button type="button" id="btnFetchOptions" onclick="fetchEquipmentOptions()" style="background-color: #2a2a2a; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%;">
+        🔍 Ver Opciones de Equipos Faltantes (Sourcing en Línea)
+      </button>
+    </div>
 
+    <!-- Contenedor donde se cargarán las opciones de la API -->
+    <div id="equipmentResults" style="display: none; margin-top: 15px; background-color: #162427; border: 1px dashed var(--accent-color); border-radius: 6px; padding: 15px;">
+      <h4 style="margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px;">Equipos recomendados según su selección:</h4>
+      <ul id="equipmentListContainer" style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-color);">
+        <!-- Los elementos se llenarán dinámicamente con JS -->
+      </ul>
+    </div>
     <!-- Contacto -->
     <fieldset class="fieldset-group" style="margin-top: 20px;">
       <legend>3. Datos de Contacto</legend>
@@ -253,7 +266,50 @@
       plcIntegration: 250 // Horas de ingeniería si no hay PLC para integrar
     }
   };
+function fetchEquipmentOptions() {
+    const hasTemp = document.getElementById('hasTempSensor').checked;
+    const hasO2 = document.getElementById('hasO2Sensor').checked;
+    const hasPLC = document.getElementById('hasPLC').checked;
+    const fuelType = document.getElementById('fuelType').value;
 
+    const resultsContainer = document.getElementById('equipmentResults');
+    const listContainer = document.getElementById('equipmentListContainer');
+    
+    // Limpiar lista anterior
+    listContainer.innerHTML = '';
+    
+    let missingItems = [];
+
+    // Lógica de filtrado según lo que falte
+    if (!hasTemp) {
+      const sensorName = fuelType === 'gas' 
+        ? 'Transmisor de Temperatura PT100 con vaina (Salida 4-20mA)' 
+        : 'Termopar Tipo K industrial de alta temperatura con cabezal';
+      missingItems.push({ name: sensorName, ref: 'Ref: WIKA / Omega - Industrial', price: '$180 USD' });
+    }
+
+    if (!hasO2) {
+      missingItems.push({ name: 'Analizador / Sonda de Oxígeno (O₂) in situ para chimenea', ref: 'Ref: Envicare / Yokogawa', price: '$1,200 USD' });
+    }
+
+    if (!hasPLC) {
+      missingItems.push({ name: 'Gateway IoT Industrial con entradas analógicas y Modbus RTU', ref: 'Ref: Seeed Studio / Advantech ESP32', price: '$450 USD' });
+    }
+
+    if (missingItems.length === 0) {
+      listContainer.innerHTML = '<li>¡Excelente! Su caldera cuenta con toda la instrumentación necesaria. Solo se requiere integración de software.</li>';
+    } else {
+      missingItems.forEach(item => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '8px';
+        li.innerHTML = `<strong>${item.name}</strong> <br><span style="color: var(--text-muted);">${item.ref} — <em>Estimado: ${item.price}</em></span>`;
+        listContainer.appendChild(li);
+      });
+    }
+
+    // Mostrar el panel de resultados con una transición limpia
+    resultsContainer.style.display = 'block';
+  }
   function calculateQuote() {
     let initialSetupCost = PRICING.baseGateway;
     let details = [];
