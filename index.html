@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -155,6 +154,16 @@
     button.btn-submit:hover {
       background-color: var(--accent-hover);
     }
+
+    .equipment-item {
+      background: #222;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -224,23 +233,25 @@
       <div class="price-tag" id="totalPrice">$0 USD</div>
       <div class="price-detail" id="priceBreakdown">Suscripción mensual Cloud: $120 USD/mes</div>
     </div>
-<!-- Botón para ver opciones detalladas -->
+
+    <!-- Botón para ver opciones detalladas tipo Sourcing -->
     <div style="margin-top: 20px; text-align: center;">
       <button type="button" id="btnFetchOptions" onclick="fetchEquipmentOptions()" style="background-color: #2a2a2a; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%;">
-        🔍 Ver Opciones de Equipos Faltantes (Sourcing en Línea)
+        📦 Ver Detalle de Sourcing (Equipos requeridos para envío)
       </button>
     </div>
 
-    <!-- Contenedor donde se cargarán las opciones de la API -->
+    <!-- Contenedor de Opciones de Sourcing -->
     <div id="equipmentResults" style="display: none; margin-top: 15px; background-color: #162427; border: 1px dashed var(--accent-color); border-radius: 6px; padding: 15px;">
-      <h4 style="margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px;">Equipos recomendados según su selección:</h4>
-      <ul id="equipmentListContainer" style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-color);">
+      <h4 style="margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px;">Componentes bajo demanda (Modelo Sourcing / Abastecimiento):</h4>
+      <div id="equipmentListContainer">
         <!-- Los elementos se llenarán dinámicamente con JS -->
-      </ul>
+      </div>
     </div>
+
     <!-- Contacto -->
     <fieldset class="fieldset-group" style="margin-top: 20px;">
-      <legend>3. Datos de Contacto</legend>
+      <legend>3. Datos de Contacto para Gestión de Envío</legend>
       <div class="form-group">
         <label for="clientName">Nombre / Empresa:</label>
         <input type="text" id="clientName" required placeholder="Ej: Ingeniería Térmica S.A.S.">
@@ -251,22 +262,22 @@
       </div>
     </fieldset>
 
-    <button type="submit" class="btn-submit">Solicitar Propuesta Formal</button>
+    <button type="submit" class="btn-submit">Solicitar Suministro y Propuesta</button>
   </form>
 </div>
 
 <script>
-  // Precios base parametrizables (USD)
   const PRICING = {
-    cloudMonthly: 120, // Cobro recurrente SaaS
-    baseGateway: 450,  // Kit básico de adquisición/Gateway IoT
+    cloudMonthly: 120,
+    baseGateway: 450,
     sensors: {
-      temp: 180,       // Sensor Pt100 industrial + Transmisor 4-20mA
-      o2: 1200,        // Analizador Zirconia/O2 industrial
-      plcIntegration: 250 // Horas de ingeniería si no hay PLC para integrar
+      temp: 180,
+      o2: 1200,
+      plcIntegration: 250
     }
   };
-function fetchEquipmentOptions() {
+
+  function fetchEquipmentOptions() {
     const hasTemp = document.getElementById('hasTempSensor').checked;
     const hasO2 = document.getElementById('hasO2Sensor').checked;
     const hasPLC = document.getElementById('hasPLC').checked;
@@ -275,41 +286,47 @@ function fetchEquipmentOptions() {
     const resultsContainer = document.getElementById('equipmentResults');
     const listContainer = document.getElementById('equipmentListContainer');
     
-    // Limpiar lista anterior
     listContainer.innerHTML = '';
-    
     let missingItems = [];
 
-    // Lógica de filtrado según lo que falte
     if (!hasTemp) {
       const sensorName = fuelType === 'gas' 
-        ? 'Transmisor de Temperatura PT100 con vaina (Salida 4-20mA)' 
-        : 'Termopar Tipo K industrial de alta temperatura con cabezal';
-      missingItems.push({ name: sensorName, ref: 'Ref: WIKA / Omega - Industrial', price: '$180 USD' });
+        ? 'Transmisor Temperatura PT100 (Salida 4-20mA)' 
+        : 'Termopar Tipo K industrial alta temperatura';
+      missingItems.push({ name: sensorName, ref: 'Ref: WIKA / Omega', price: '$180 USD', type: 'Hardware Sourcing' });
     }
 
     if (!hasO2) {
-      missingItems.push({ name: 'Analizador / Sonda de Oxígeno (O₂) in situ para chimenea', ref: 'Ref: Envicare / Yokogawa', price: '$1,200 USD' });
+      missingItems.push({ name: 'Analizador / Sonda de Oxígeno (O₂) in situ', ref: 'Ref: Yokogawa / Envicare', price: '$1,200 USD', type: 'Hardware Sourcing' });
     }
 
     if (!hasPLC) {
-      missingItems.push({ name: 'Gateway IoT Industrial con entradas analógicas y Modbus RTU', ref: 'Ref: Seeed Studio / Advantech ESP32', price: '$450 USD' });
+      missingItems.push({ name: 'Gateway IoT Industrial Modbus RTU', ref: 'Ref: Advantech / ESP32 Industrial', price: '$450 USD', type: 'Hardware Sourcing' });
     }
 
     if (missingItems.length === 0) {
-      listContainer.innerHTML = '<li>¡Excelente! Su caldera cuenta con toda la instrumentación necesaria. Solo se requiere integración de software.</li>';
+      listContainer.innerHTML = '<p style="font-size: 13px; color: var(--text-color); margin: 0;">¡La caldera cuenta con toda la instrumentación! Solo requiere aprovisionamiento de pasarela cloud.</p>';
     } else {
       missingItems.forEach(item => {
-        const li = document.createElement('li');
-        li.style.marginBottom = '8px';
-        li.innerHTML = `<strong>${item.name}</strong> <br><span style="color: var(--text-muted);">${item.ref} — <em>Estimado: ${item.price}</em></span>`;
-        listContainer.appendChild(li);
+        const div = document.createElement('div');
+        div.className = 'equipment-item';
+        div.innerHTML = `
+          <div>
+            <strong style="font-size: 13px; color: #fff;">${item.name}</strong><br>
+            <span style="font-size: 11px; color: var(--text-muted);">${item.ref}</span>
+          </div>
+          <div style="text-align: right;">
+            <span style="color: var(--accent-color); font-weight: bold; font-size: 13px;">${item.price}</span><br>
+            <span style="font-size: 10px; background: #333; padding: 2px 6px; border-radius: 3px; color: #aaa;">Disponible bajo pedido</span>
+          </div>
+        `;
+        listContainer.appendChild(div);
       });
     }
 
-    // Mostrar el panel de resultados con una transición limpia
     resultsContainer.style.display = 'block';
   }
+
   function calculateQuote() {
     let initialSetupCost = PRICING.baseGateway;
     let details = [];
@@ -319,50 +336,42 @@ function fetchEquipmentOptions() {
     const hasPLC = document.getElementById('hasPLC').checked;
     const capacity = document.getElementById('boilerCapacity').value;
 
-    // Ajuste por capacidad
     let scaleMultiplier = 1;
     if (capacity === 'medium') scaleMultiplier = 1.15;
     if (capacity === 'large') scaleMultiplier = 1.3;
 
-    // Evaluar lo que HACE FALTA incluir
     if (!hasTemp) {
       initialSetupCost += PRICING.sensors.temp;
-      details.push("Incluye Sensor Temp Chimenea");
+      details.push("Sensor Temp");
     }
-
     if (!hasO2) {
-      initialSetupCost += PRICING.sensors.o2;
-      details.push("Incluye Sonda O₂");
+      initialSetupCost += PRICing.sensors.o2;
+      details.push("Sonda O₂");
     }
-
     if (!hasPLC) {
       initialSetupCost += PRICING.sensors.plcIntegration;
-      details.push("Incluye Módulo de Adquisición Autónomo");
+      details.push("Gateway IoT");
     }
 
-    // Aplicar escala por tamaño
     initialSetupCost = Math.round(initialSetupCost * scaleMultiplier);
 
-    // Actualizar UI
     document.getElementById('totalPrice').innerText = `$${initialSetupCost.toLocaleString()} USD`;
     
-    let breakdownText = `Pago único (Hardware/Setup) + Suscripción Cloud: $${PRICING.cloudMonthly} USD/mes.`;
+    let breakdownText = `SaaS Cloud: $${PRICING.cloudMonthly} USD/mes.`;
     if (details.length > 0) {
-      breakdownText += `<br>(${details.join(', ')})`;
+      breakdownText += `<br>(Incluye abastecimiento de: ${details.join(', ')})`;
     } else {
-      breakdownText += `<br>(Integración directa a infraestructura existente)`;
+      breakdownText += `<br>(Sin costos de hardware adicional)`;
     }
     
     document.getElementById('priceBreakdown').innerHTML = breakdownText;
   }
 
-  // Precalcula al cargar la página
   calculateQuote();
 
-  // Envío del formulario
   document.getElementById('boilerForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    alert('¡Gracias por configurar su requerimiento! Los datos se han registrado y enviaremos la propuesta técnica detallada al correo ingresado.');
+    alert('¡Solicitud de suministro y propuesta técnica registrada con éxito! Nos pondremos en contacto para coordinar la logística de entrega.');
   });
 </script>
 
