@@ -65,6 +65,12 @@ footer{text-align:center;padding:30px;border-top:1px solid var(--border-color);c
 .sim-vars input:disabled{opacity:.5}
 details.ash{margin-top:14px;border-top:1px solid var(--border-color);padding-top:10px}
 details.ash summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent-color);margin-bottom:10px}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:#a0a0a0;font-size:11px;font-family:inherit}
+.chart .gl{stroke:#2a2a2a;stroke-width:1}
+.chart .ln{fill:none;stroke:var(--accent-color);stroke-width:2;stroke-linejoin:round}
+.chart .ar{fill:rgba(0,188,212,.12);stroke:none}
+.chart .dot{fill:#00e5ff}
 @media(prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -95,6 +101,10 @@ details.ash summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ac
       <g id="pk"></g>
     </svg>
       <div class="panel" style="margin-top:20px">
+        <h3>Eficiencia η (%) vs tiempo · últimos 60 s</h3>
+        <svg id="chart" class="chart" viewBox="0 0 600 185" role="img" aria-label="Gráfico de eficiencia contra tiempo"></svg>
+      </div>
+      <div class="panel" style="margin-top:20px">
         <h3>Pérdidas calculadas en la nube</h3>
         <div id="losses"></div>
         <div class="eff"><span>Eficiencia (método indirecto)</span><strong id="effTxt">–</strong></div>
@@ -103,7 +113,7 @@ details.ash summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ac
       </div>
       <div class="panel sim-vars">
         <h3>Variables en campo</h3>
-        <button class="auto" id="auto">▶ Simulación automática</button>
+        <button class="auto on" id="auto">⏸ Cambiar a manual</button>
         <div id="ctl"></div>
       </div>
     </div>
@@ -224,7 +234,7 @@ function render(){
  if(bad){e.textContent='Revisar datos';e.style.fill='#ffb74d';}
  else if(prev&&!prev.bad){const d=eff-prev.eff; if(Math.abs(d)>0.005){e.textContent=(d>0?'▲ +':'▼ ')+f(d,2)+' pts';e.style.fill=d>0?'#69f0ae':'#ffb74d';}}
  else e.textContent='';
- prev={r,eff,bad}; pulse('n_dash');
+ prev={r,eff,bad}; pulse('n_dash'); if(!bad)addPt(eff);
 }
 
 /* Sincronizar controles y etiquetas */
@@ -276,20 +286,46 @@ $('fuel').addEventListener('change',e=>{
 });
 function sweep(){send('gas',I.tg+' °C');send('fuel',I.flow+' kg/h');send('wall',I.tb+' °C');send('amb',I.ta+' °C');send('water','92 °C');send('steam','10 bar');}
 
-/* Modo automático */
+/* Modo automático (inicia activo; el botón pasa a manual) */
 let timer=null;
-$('auto').addEventListener('click',e=>{
- const b=e.target;
- if(timer){clearInterval(timer);timer=null;b.textContent='▶ Simulación automática';b.classList.remove('on');return;}
- b.textContent='■ Detener simulación';b.classList.add('on');
- const ks=RK.filter(k=>k!=='area'),
- step=()=>{const k=ks[Math.floor(Math.random()*ks.length)],el=$(k),mn=+el.min,mx=+el.max,st=+el.step,
-   v=Math.min(mx,Math.max(mn,I[k]+(Math.random()-.5)*(mx-mn)*.25));
-   I[k]=+(Math.round(v/st)*st).toFixed(2); sync(); send(node[k],lbl(k));};
- step(); timer=setInterval(step,2600);
-});
+const ks=RK.filter(k=>k!=='area'),
+step=()=>{const k=ks[Math.floor(Math.random()*ks.length)],el=$(k),mn=+el.min,mx=+el.max,st=+el.step,
+  v=Math.min(mx,Math.max(mn,I[k]+(Math.random()-.5)*(mx-mn)*.25));
+  I[k]=+(Math.round(v/st)*st).toFixed(2); sync(); send(node[k],lbl(k));};
+function setAuto(on){
+ const b=$('auto'); if(timer){clearInterval(timer);timer=null;}
+ if(on){step();timer=setInterval(step,1500);}
+ b.textContent=on?'⏸ Cambiar a manual':'▶ Simulación automática'; b.classList.toggle('on',on);
+}
+$('auto').addEventListener('click',()=>setAuto(!timer));
+
+/* Gráfico eficiencia vs tiempo (escalón: la nube solo actualiza cuando llega un dato) */
+const WIN=60000, pts=[];
+function addPt(v){const t=performance.now();pts.push({t,v});while(pts.length>2&&pts[1].t<t-WIN)pts.shift();}
+function drawChart(){
+ const now=performance.now(), x0=now-WIN, L=44, R=572, T=10, B=158, vs=pts.map(p=>p.v);
+ let lo=vs.length?Math.min(...vs):80, hi=vs.length?Math.max(...vs):90;
+ lo=Math.floor(lo-0.5); hi=Math.ceil(hi+0.5);
+ if(hi-lo<4){lo=Math.floor((hi+lo)/2-2);hi=lo+4;}
+ const X=t=>L+Math.max(0,(t-x0)/WIN)*(R-L), Y=v=>B-(v-lo)/(hi-lo)*(B-T);
+ let g='';
+ for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);
+  g+=`<line class="gl" x1="${L}" x2="${R}" y1="${y}" y2="${y}"/><text x="${L-6}" y="${y+4}" text-anchor="end">${f(v,hi-lo>8?0:1)}</text>`;}
+ [60,45,30,15,0].forEach(s=>{g+=`<text x="${X(now-s*1000)}" y="177" text-anchor="middle">${s?'−'+s+' s':'ahora'}</text>`;});
+ if(pts.length){
+  let d='';
+  pts.forEach((p,i)=>{d+=i?`H${X(p.t)}V${Y(p.v)}`:`M${X(p.t)} ${Y(p.v)}`;});
+  d+=`H${X(now)}`;
+  const lp=pts[pts.length-1];
+  g+=`<path class="ar" d="${d}V${B}H${X(pts[0].t)}Z"/><path class="ln" d="${d}"/><circle class="dot" cx="${X(now)}" cy="${Y(lp.v)}" r="4"/>`;
+ }
+ $('chart').innerHTML=g;
+}
+setInterval(drawChart,250);
+setInterval(()=>{if(prev&&!prev.bad)addPt(prev.eff);},1000);
 
 sync(); render(); prev=null; setTimeout(sweep,400); setInterval(sweep,8000);
+setAuto(true);
 window.__sma={calc,I,FU};
 })();
 </script>
